@@ -17,12 +17,13 @@ nodes = {
     "spine": [],
     "leaf": [],
 }
+dn2hostname = {}
 
 
 def print_title(title):
-    print(f"{fontcolors['INFO']}" + "=" * 60)
+    print(f"{fontcolors['INFO']}" + "=" * 90)
     print(f"{fontcolors['INFO']} {title}")
-    print(f"{fontcolors['INFO']}" + "=" * 60)
+    print(f"{fontcolors['INFO']}" + "=" * 90)
 
 
 def print_msg(msg, ok=True):
@@ -77,11 +78,11 @@ def check_status(moclass):
     for node, nr in check_control.items():
         if nr >= settings[moclass]["ok_cnt"]:
             print_msg(
-                f"{node} has {nr} connected {settings[moclass]['msg_suffix']}"
+                f"{node} ({dn2hostname[node]}) has {nr} connected {settings[moclass]['msg_suffix']}"
             )
         else:
             print_msg(
-                f"{node} has {nr} connected {settings[moclass]['msg_suffix']}",
+                f"{node} ({dn2hostname[node]}) has {nr} connected {settings[moclass]['msg_suffix']}",
                 False,
             )
 
@@ -100,6 +101,7 @@ def test_redundany():
         nodes[mo["fabricNode"]["attributes"]["role"]].append(
             mo["fabricNode"]["attributes"]["dn"]
         )
+        dn2hostname[mo["fabricNode"]["attributes"]["dn"]] = mo["fabricNode"]["attributes"]["name"]
 
     # check apics
     check_status("cnwPhysIf")
