@@ -9,7 +9,7 @@ This script is useful during upgrades of an ACI-fabric - the follwing is checked
 
 ### Sample output
 
-![Sample Output](sample_output.png?raw=true)
+![Sample Output](/images/sample_output.png?raw=true)
 
 ## Installation
 
