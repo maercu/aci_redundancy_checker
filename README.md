@@ -22,6 +22,7 @@ This script is useful during upgrades of an ACI-fabric - the follwing is checked
     cd aci_redundancy_checker
     python3 -m venv .venv
     source .venv/bin/activate
+    pip install -r requirements.txt
 
 ### Load APIC credentials envioronment variables  
     
