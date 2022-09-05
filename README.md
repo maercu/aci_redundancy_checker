@@ -4,7 +4,7 @@
 
 This script is useful during upgrades of an ACI-fabric - the follwing is checked:
  - Number of active fabric uplinks per controller
- - Number of OSPF active neighbors in VRF overlay-1 on the spines (multipod fabric only)
+ - Number of active OSPF neighbors in VRF overlay-1 on the spines (multipod fabric only)
  - Number of active ISIS neighbors per leaf
 
 ### Sample output
