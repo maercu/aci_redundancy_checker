@@ -33,7 +33,7 @@ This script is useful during upgrades of an ACI-fabric - the follwing is checked
 
 #### Load APIC credentials envioronment variables  
     
-    cat << EOF > acienv 
+    tee acienv << EOF
     export ACI_USER=username
     export ACI_PASS=password
     export ACI_HOST=hostname_or_ip

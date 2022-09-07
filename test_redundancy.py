@@ -34,28 +34,27 @@ def print_msg(msg, ok=True):
 
 
 def check_status(moclass):
+    #and({settings[moclass]["filter1"][0]}({moclass}.{settings[moclass]["filter1"][1]},"{settings[moclass]["filter1"][2]}"),{settings[moclass]["filter2"][0]}({moclass}.{settings[moclass]["filter2"][1]},"{settings[moclass]["filter2"][2]}"))
     settings = {
-        "cnwPhysIf": {
+        "lldpAdjEp": {
             "title": "checking apic uplinks",
             "nodetype": "controller",
-            "filter1": ("wcard", "name", "eth2-"),
-            "filter2": ("eq", "operSt", "up"),
+            "filter": ('wcard(lldpAdjEp.dn,"eth2/")'),
+            #"filter2": ("eq", "operSt", "up"),
             "ok_cnt": 2,
             "msg_suffix": "fabric uplink(s)",
         },
         "ospfAdjEp": {
             "title": "checking multipod uplinks",
             "nodetype": "spine",
-            "filter1": ("wcard", "dn", "dom-overlay-1"),
-            "filter2": ("eq", "operSt", "full"),
+            "filter": 'and(wcard(ospfAdjEp.dn,"dom-overlay-1"),eq(ospfAdjEp.operSt,"full"))',
             "ok_cnt": 1,
             "msg_suffix": "IPN neighbor(s)",
         },
         "isisAdjEp": {
             "title": "checking leaf uplinks",
             "nodetype": "leaf",
-            "filter1": ("wcard", "dn", "dom-overlay-1"),
-            "filter2": ("eq", "operSt", "up"),
+            "filter": 'and(wcard(isisAdjEp.dn,"dom-overlay-1"),eq(isisAdjEp.operSt,"up"))',
             "ok_cnt": 2,
             "msg_suffix": "ISIS neighbor(s)",
         },
@@ -67,7 +66,8 @@ def check_status(moclass):
     for node in nodes[settings[moclass]["nodetype"]]:
         check_control[node] = 0
 
-    url = f'class/{moclass}.json?query-target-filter=and({settings[moclass]["filter1"][0]}({moclass}.{settings[moclass]["filter1"][1]},"{settings[moclass]["filter1"][2]}"),{settings[moclass]["filter2"][0]}({moclass}.{settings[moclass]["filter2"][1]},"{settings[moclass]["filter2"][2]}"))'
+    url = f'class/{moclass}.json?query-target-filter={settings[moclass]["filter"]}'
+
     for mo in aci.getJson(url):
         node = re.match(
             r"(topology/pod-\d+/node-\d+)/.*", mo[moclass]["attributes"]["dn"]
@@ -104,7 +104,7 @@ def test_redundany():
         dn2hostname[mo["fabricNode"]["attributes"]["dn"]] = mo["fabricNode"]["attributes"]["name"]
 
     # check apics
-    check_status("cnwPhysIf")
+    check_status("lldpAdjEp")
 
     # checking spines
     if IS_MULTIPOD:
