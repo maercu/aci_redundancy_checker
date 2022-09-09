@@ -106,7 +106,7 @@ def check_status(moclass):
         nei_red = check_neighbor_redundancy(info["molist"], info["check_field"], regex)
         if info["cnt"] >= settings[moclass]["ok_cnt"] and nei_red:
             print_msg(
-                f"{node} ({dn2hostname[node]}) has {info['cnt']} connected {settings[moclass]['msg_suffix']} to multiple neighbors"
+                f"{node} ({dn2hostname[node]}) has {info['cnt']} connected {settings[moclass]['msg_suffix']} to different upstreams"
             )
         else:
             print_msg(
