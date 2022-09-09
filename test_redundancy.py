@@ -33,15 +33,27 @@ def print_msg(msg, ok=True):
         print(f"{fontcolors['FAIL']}ERROR: {msg}")
 
 
+def check_neighbor_redundancy(molist, check_field, regex=False):
+    redundancy = set()
+    key = list(molist[0].keys())[0]
+    for mo in molist:
+        if regex:
+            redundancy.add(re.match(regex[0], mo[key]["attributes"][check_field]).group(regex[1]))
+        else:
+            redundancy.add(mo[key]["attributes"][check_field])
+    return len(redundancy) > 1
+
+
 def check_status(moclass):
-    #and({settings[moclass]["filter1"][0]}({moclass}.{settings[moclass]["filter1"][1]},"{settings[moclass]["filter1"][2]}"),{settings[moclass]["filter2"][0]}({moclass}.{settings[moclass]["filter2"][1]},"{settings[moclass]["filter2"][2]}"))
+    # and({settings[moclass]["filter1"][0]}({moclass}.{settings[moclass]["filter1"][1]},"{settings[moclass]["filter1"][2]}"),{settings[moclass]["filter2"][0]}({moclass}.{settings[moclass]["filter2"][1]},"{settings[moclass]["filter2"][2]}"))
     settings = {
         "lldpAdjEp": {
             "title": "checking apic uplinks",
             "nodetype": "controller",
             "filter": ('wcard(lldpAdjEp.dn,"eth2/")'),
-            #"filter2": ("eq", "operSt", "up"),
             "ok_cnt": 2,
+            "check_field": "sysDesc",
+            "re": False,
             "msg_suffix": "fabric uplink(s)",
         },
         "ospfAdjEp": {
@@ -49,6 +61,8 @@ def check_status(moclass):
             "nodetype": "spine",
             "filter": 'and(wcard(ospfAdjEp.dn,"dom-overlay-1"),eq(ospfAdjEp.operSt,"full"))',
             "ok_cnt": 1,
+            "check_field": "dn",
+            "re": (r".*/(adj-\d+.\d+.\d+.\d+)", 1),
             "msg_suffix": "IPN neighbor(s)",
         },
         "isisAdjEp": {
@@ -56,6 +70,8 @@ def check_status(moclass):
             "nodetype": "leaf",
             "filter": 'and(wcard(isisAdjEp.dn,"dom-overlay-1"),eq(isisAdjEp.operSt,"up"))',
             "ok_cnt": 2,
+            "check_field": "name",
+            "re": False,
             "msg_suffix": "ISIS neighbor(s)",
         },
     }
@@ -64,7 +80,12 @@ def check_status(moclass):
 
     check_control = {}
     for node in nodes[settings[moclass]["nodetype"]]:
-        check_control[node] = 0
+        check_control[node] = {
+            "cnt": 0,
+            "molist": [],
+            "check_field": settings[moclass]["check_field"],
+            "re": settings[moclass]["re"],
+        }
 
     url = f'class/{moclass}.json?query-target-filter={settings[moclass]["filter"]}'
 
@@ -73,16 +94,21 @@ def check_status(moclass):
             r"(topology/pod-\d+/node-\d+)/.*", mo[moclass]["attributes"]["dn"]
         ).group(1)
         if node in check_control:
-            check_control[node] += 1
+            check_control[node]["cnt"] += 1
+            check_control[node]["molist"].append(mo)
 
-    for node, nr in check_control.items():
-        if nr >= settings[moclass]["ok_cnt"]:
+    for node, info in check_control.items():
+        regex = False
+        if info["re"]:
+            regex = info["re"]
+        nei_red = check_neighbor_redundancy(info["molist"], info["check_field"], regex)
+        if info["cnt"] >= settings[moclass]["ok_cnt"] and nei_red:
             print_msg(
-                f"{node} ({dn2hostname[node]}) has {nr} connected {settings[moclass]['msg_suffix']}"
+                f"{node} ({dn2hostname[node]}) has {info['cnt']} connected {settings[moclass]['msg_suffix']} to multiple neighbors"
             )
         else:
             print_msg(
-                f"{node} ({dn2hostname[node]}) has {nr} connected {settings[moclass]['msg_suffix']}",
+                f"{node} ({dn2hostname[node]}) has {info['cnt']} connected {settings[moclass]['msg_suffix']}, different neighbors: {nei_red}",
                 False,
             )
 
@@ -101,7 +127,9 @@ def test_redundany():
         nodes[mo["fabricNode"]["attributes"]["role"]].append(
             mo["fabricNode"]["attributes"]["dn"]
         )
-        dn2hostname[mo["fabricNode"]["attributes"]["dn"]] = mo["fabricNode"]["attributes"]["name"]
+        dn2hostname[mo["fabricNode"]["attributes"]["dn"]] = mo["fabricNode"][
+            "attributes"
+        ]["name"]
 
     # check apics
     check_status("lldpAdjEp")
