@@ -38,7 +38,9 @@ def check_neighbor_redundancy(molist, check_field, regex=False):
     key = list(molist[0].keys())[0]
     for mo in molist:
         if regex:
-            redundancy.add(re.match(regex[0], mo[key]["attributes"][check_field]).group(regex[1]))
+            redundancy.add(
+                re.match(regex[0], mo[key]["attributes"][check_field]).group(regex[1])
+            )
         else:
             redundancy.add(mo[key]["attributes"][check_field])
     return len(redundancy) > 1
@@ -54,7 +56,7 @@ def check_status(moclass):
             "ok_cnt": 2,
             "check_field": "sysDesc",
             "re": False,
-            "msg_suffix": "fabric uplink(s)",
+            "msg_suffix": "fabric uplinks",
         },
         "ospfAdjEp": {
             "title": "checking multipod uplinks",
@@ -63,7 +65,7 @@ def check_status(moclass):
             "ok_cnt": 1,
             "check_field": "dn",
             "re": (r".*/(adj-\d+.\d+.\d+.\d+)", 1),
-            "msg_suffix": "IPN neighbor(s)",
+            "msg_suffix": "IPN neighbors",
         },
         "isisAdjEp": {
             "title": "checking leaf uplinks",
@@ -72,7 +74,7 @@ def check_status(moclass):
             "ok_cnt": 2,
             "check_field": "name",
             "re": False,
-            "msg_suffix": "ISIS neighbor(s)",
+            "msg_suffix": "ISIS neighbors",
         },
     }
 
@@ -108,7 +110,7 @@ def check_status(moclass):
             )
         else:
             print_msg(
-                f"{node} ({dn2hostname[node]}) has {info['cnt']} connected {settings[moclass]['msg_suffix']}, different neighbors: {nei_red}",
+                f"{node} ({dn2hostname[node]}) uplinks: {info['cnt']}, different neighbors: {nei_red}",
                 False,
             )
 
